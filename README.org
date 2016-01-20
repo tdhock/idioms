@@ -1,0 +1,108 @@
+This page catalogs a set of idioms that I have found useful in R.
+
+*** Accumulating data.frames
+
+To create a large data.frame from two smaller data.frames you may be
+tempted to do 
+
+#+BEGIN_SRC R
+  big.df <- NULL
+  for(i in i.vec){
+    for(j in j.vec){
+      small.df <- data.frame(i, j)
+      big.df <- rbind(big.df, small.df)
+    }
+  }
+#+END_SRC
+
+It works, but it is slower than 
+
+#+BEGIN_SRC R
+  big.df.list <- list()
+  for(i in i.vec){
+    for(j in j.vec){
+      small.df <- data.frame(i, j)
+      big.df.list[[paste(i, j)]] <- small.df
+    }
+  }
+  big.df <- do.call(rbind, big.df.list)
+#+END_SRC
+
+*** COMMENT Readable literal data.frames
+
+To construct a literal data.frame using R code you may be tempted to
+write
+
+#+BEGIN_SRC R
+  regex.df <- data.frame(
+    pattern=c("[a-z]", "[A-Z]",
+              "[0-9]", "[^0-9a-zA-Z]"),
+    matches=c("abc", "ABC",
+              "123", "!@#$%"))
+#+END_SRC
+
+It is more readable to keep related data near each other, on the same
+line:
+
+#+BEGIN_SRC R
+  oneRow <- function(pattern, matches){
+    data.frame(pattern, matches)
+  }
+  regex.df <- rbind(
+    oneRow("[a-z]", "abc"),
+    oneRow("[A-Z]", "ABC"),
+    oneRow("[0-9]", "123"),
+    oneRow("[^0-9a-zA-Z]", "!@#$%"))
+#+END_SRC
+
+Another option that is bit less explicit, but less repetitive:
+
+#+BEGIN_SRC R
+  oneDF <- function(...){
+    item.list <- list(...)
+    item.df <- do.call(rbind, item.list)
+    colnames(item.df) <- c("pattern", "matches")
+    data.frame(item.df)
+  }
+  regex.df <- oneDF(
+    c("[a-z]", "abc"),
+    c("[A-Z]", "ABC"),
+    c("[0-9]", "123"),
+    c("[^0-9a-zA-Z]", "!@#$%"))
+#+END_SRC
+
+*** Recording package dependencies
+
+Because of the versionless =install.packages= function, it is
+[[http://sugiyama-www.cs.titech.ac.jp/~toby/org/HOCKING-reproducible-research-with-R.html][difficult to conduct truly reproducible research using R]]. In one of
+your scripts you may be tempted to write
+
+#+BEGIN_SRC R
+library(ggplot2)
+#+END_SRC
+
+to indicate that you code uses the ggplot2 package. But there were
+major backwards-incomapatible changes to the ggplot2 package
+in 2015. How will the future users of your code (including your future
+self) know which version to use?
+
+Instead, I would recommend writing the following at the top of your R
+script. It indicates the version of a package from a CRAN-like
+repository.
+
+#+BEGIN_SRC R
+  works_with_R("3.2.3", ggplot2="1.0.1")
+#+END_SRC
+
+
+Even better, if the package can be found on GitHub you can indicate
+the repository that it comes from, and the specific commit that you
+used.
+
+#+BEGIN_SRC R
+  works_with_R("3.2.3", 
+               "tdhock/ggplot2@a8b06ddb680acdcdbd927773b1011c562134e4d2")
+#+END_SRC
+
+I recommend defining [[file:works_with.R][works_with_R]] in your =~/.Rprofile=.
+
