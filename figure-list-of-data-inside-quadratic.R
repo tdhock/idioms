@@ -25,14 +25,14 @@ for(i in 1:N){
 system.time({
   inside.dt <- NULL
   for(i in 1:N){
-    inside.dt <- rbind(inside.dt, list.of.data[[i]])
+    inside.dt <- rbind(inside.dt, data.table(i, list.of.data[[i]]))
   }
 })
 
 system.time({
   outside.dt.list <- list()
   for(i in 1:N){
-    outside.dt.list[[i]] <- list.of.data[[i]]
+    outside.dt.list[[i]] <- data.table(i, list.of.data[[i]])
   }
   outside.dt <- do.call(rbind, outside.dt.list)
 })
@@ -47,12 +47,12 @@ for(last.element in last.element.vec){
   time.df <- microbenchmark(inside={
     inside.dt <- NULL
     for(i in 1:last.element){
-      inside.dt <- rbind(inside.dt, list.of.data[[i]])
+      inside.dt <- rbind(inside.dt, data.table(i, list.of.data[[i]]))
     }
   }, outside={
     outside.dt.list <- list()
     for(i in 1:N){
-      outside.dt.list[[i]] <- list.of.data[[i]]
+      outside.dt.list[[i]] <- data.table(i, list.of.data[[i]])
     }
     outside.dt <- do.call(rbind, outside.dt.list)
   }, times=3)
